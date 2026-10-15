@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ec">
+  <title>Playlist Study Tracker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      color-scheme: light;
+      --paper: #f5f3ec;
+      --ink: #17221f;
+      --muted: #68736e;
+      --line: #d9ddd4;
+      --green: #b8f36c;
+      --green-dark: #285a36;
+      --orange: #e66b45;
+      --white: #fffefa;
+      --mono: 'DM Mono', monospace;
+      --sans: 'Manrope', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: radial-gradient(#c8cec2 0.65px, transparent 0.65px);
+      background-size: 15px 15px;
+      font-family: var(--sans);
+    }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    .shell { width: min(1020px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 64px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 26px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; }
+    .brand-mark { display: grid; width: 30px; height: 30px; place-items: center; background: var(--green); border: 1px solid var(--ink); border-radius: 8px; font-size: 15px; }
+    .local-note { color: var(--muted); font: 11px var(--mono); }
+    .intro { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; padding: 48px 0 30px; }
+    .eyebrow { margin: 0 0 11px; color: var(--green-dark); font: 11px var(--mono); text-transform: uppercase; }
+    h1 { max-width: 630px; margin: 0; font-size: clamp(34px, 6vw, 58px); line-height: 1.02; font-weight: 800; }
+    h1 span { color: var(--orange); }
+    .intro-copy { max-width: 250px; margin: 0 0 5px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .import-panel { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; padding: 17px; border: 1px solid var(--ink); border-radius: 8px; background: var(--white); box-shadow: 4px 4px 0 var(--ink); }
+    .field { display: grid; gap: 7px; min-width: 0; }
+    label, .field-label { color: var(--muted); font: 10px var(--mono); text-transform: uppercase; }
+    input, textarea { width: 100%; min-width: 0; padding: 11px 12px; color: var(--ink); border: 1px solid var(--line); border-radius: 5px; outline: none; background: #fff; font-size: 13px; }
+    input:focus, textarea:focus { border-color: var(--green-dark); box-shadow: 0 0 0 2px #b8f36c66; }
+    .primary { height: 41px; padding: 0 17px; border: 1px solid var(--ink); border-radius: 5px; background: var(--green); font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+    .primary:hover { background: #a9e958; }
+    button:disabled { opacity: .55; cursor: wait; }
+    .advanced { margin: 15px 0 29px; }
+    summary { width: fit-content; color: var(--muted); font: 11px var(--mono); cursor: pointer; }
+    .paste-area { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; max-width: 700px; margin-top: 12px; }
+    textarea { min-height: 76px; resize: vertical; line-height: 1.5; }
+    .secondary { min-height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 5px; background: var(--white); font-size: 11px; font-weight: 700; cursor: pointer; }
+    .secondary:hover { border-color: var(--ink); }
+    .status { min-height: 18px; margin: -15px 0 16px; color: var(--muted); font-size: 12px; }
+    .status.error { color: #b43f2f; }
+    .workspace { border-top: 1px solid var(--ink); }
+    .list-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding: 22px 0 16px; }
+    .list-title { min-width: 0; }
+    .list-title h2 { overflow: hidden; margin: 0; font-size: 18px; text-overflow: ellipsis; white-space: nowrap; }
+    .list-title p { margin: 5px 0 0; color: var(--muted); font: 10px var(--mono); }
+    .actions { display: flex; gap: 7px; flex-shrink: 0; }
+    .icon-button { display: inline-grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--line); border-radius: 5px; background: var(--white); cursor: pointer; }
+    .icon-button:hover { border-color: var(--ink); }
+    .icon-button svg { width: 15px; height: 15px; }
+    .progress { display: grid; grid-template-columns: auto minmax(80px, 1fr) auto; gap: 13px; align-items: center; padding: 13px 0 19px; }
+    .percent { font: 12px var(--mono); }
+    .track { height: 8px; overflow: hidden; border: 1px solid var(--ink); border-radius: 8px; background: var(--white); }
+    .fill { width: 0; height: 100%; background: var(--green-dark); transition: width .25s ease; }
+    .counts { color: var(--muted); font: 10px var(--mono); white-space: nowrap; }
+    .video-list { border-top: 1px solid var(--line); }
+    .video-row { display: grid; grid-template-columns: 23px minmax(0, 1fr) 30px; gap: 12px; align-items: center; min-height: 63px; border-bottom: 1px solid var(--line); animation: enter .3s both; }
+    @keyframes enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .video-check { appearance: none; width: 19px; height: 19px; margin: 0; border: 1.5px solid #8c968e; border-radius: 4px; background: var(--white); cursor: pointer; }
+    .video-check:checked { border-color: var(--green-dark); background: var(--green-dark); }
+    .video-check:checked::after { display: block; content: ''; width: 9px; height: 5px; margin: 4px 0 0 3px; border: solid #fff; border-width: 0 0 2px 2px; transform: rotate(-45deg); }
+    .video-label { min-width: 0; }
+    .video-label a { display: block; overflow: hidden; color: var(--ink); font-size: 13px; font-weight: 600; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+    .video-label a:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .video-label small { display: block; margin-top: 4px; color: var(--muted); font: 9px var(--mono); }
+    .video-row.done .video-label a { color: #7d8880; text-decoration: line-through; }
+    .open-link { display: grid; width: 28px; height: 28px; place-items: center; color: var(--muted); border-radius: 4px; }
+    .open-link:hover { color: var(--ink); background: #e9ede4; }
+    .open-link svg { width: 14px; height: 14px; }
+    .empty { padding: 35px 0; color: var(--muted); font-size: 13px; }
+    .footer { display: flex; justify-content: space-between; gap: 14px; margin-top: 24px; color: var(--muted); font: 9px var(--mono); }
+    @media (max-width: 720px) {
+      .shell { width: min(100% - 28px, 600px); padding-top: 18px; }
+      .intro { grid-template-columns: 1fr; gap: 13px; padding: 36px 0 23px; }
+      .intro-copy { max-width: 390px; }
+      .import-panel { grid-template-columns: 1fr; }
+      .primary { width: 100%; }
+      .local-note { max-width: 130px; text-align: right; line-height: 1.5; }
+      .list-heading { align-items: center; }
+      .list-title h2 { max-width: 60vw; }
+      .paste-area { grid-template-columns: 1fr; }
+      .paste-area .secondary { justify-self: start; }
+      .footer { flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✓</span> STUDY / TRACK</div>
+      <div class="local-note">YOUR PROGRESS STAYS ON THIS DEVICE</div>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">Turn watching into progress</p>
+        <h1>One lesson at a time<span>.</span></h1>
+      </div>
+      <p class="intro-copy">Bring in a YouTube playlist, check off each lesson, and see exactly how far you’ve come.</p>
+    </section>
+
+    <form class="import-panel" id="import-form">
+      <div class="field">
+        <label for="playlist-url">YouTube playlist URL</label>
+        <input id="playlist-url" type="url" placeholder="youtube.com/playlist?list=..." required>
+      </div>
+      <div class="field">
+        <label for="api-key">YouTube Data API key</label>
+        <input id="api-key" type="password" placeholder="Paste your API key" autocomplete="off" required>
+      </div>
+      <button class="primary" id="load-button" type="submit">Import playlist <span aria-hidden="true">↗</span></button>
+    </form>
+
+    <details class="advanced">
+      <summary>Or add lesson names manually</summary>
+      <div class="paste-area">
+        <div class="field">
+          <label for="manual-lessons">One lesson per line (paste URLs or titles)</label>
+          <textarea id="manual-lessons" placeholder="Lecture 1 - Introduction&#10;Lecture 2 - Key concepts"></textarea>
+        </div>
+        <button class="secondary" id="add-manual" type="button">Add lessons</button>
+      </div>
+    </details>
+
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <section class="workspace" aria-label="Playlist checklist">
+      <div class="list-heading">
+        <div class="list-title">
+          <h2 id="playlist-title">Your study list</h2>
+          <p id="playlist-meta">NO PLAYLIST LOADED</p>
+        </div>
+        <div class="actions">
+          <button class="icon-button" id="clear-completed" type="button" title="Remove completed lessons" aria-label="Remove completed lessons">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>
+          </button>
+          <button class="icon-button" id="remove-list" type="button" title="Remove playlist" aria-label="Remove playlist">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="progress" aria-label="Completion progress">
+        <span class="percent" id="percent">0%</span>
+        <div class="track" role="progressbar" id="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Playlist completion"><div class="fill" id="progress-fill"></div></div>
+        <span class="counts" id="counts">0 / 0 DONE</span>
+      </div>
+      <div class="video-list" id="video-list"><p class="empty">Import a playlist or add lesson names to get started.</p></div>
+      <footer class="footer"><span>CHECKED LESSONS ARE SAVED AUTOMATICALLY</span><span>STUDY AT YOUR OWN PACE</span></footer>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'study-track-playlist-v1';
+    const form = document.querySelector('#import-form');
+    const status = document.querySelector('#status');
+    const videoList = document.querySelector('#video-list');
+    let playlist = loadSaved();
+
+    function loadSaved() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return saved && Array.isArray(saved.items) ? saved : { title: '', items: [] };
+      } catch {
+        return { title: '', items: [] };
+      }
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(playlist));
+    }
+
+    function announce(message, isError = false) {
+      status.textContent = message;
+      status.classList.toggle('error', isError);
+    }
+
+    function playlistIdFromUrl(value) {
+      try {
+        const url = new URL(value);
+        return url.searchParams.get('list') || '';
+      } catch {
+        return '';
+      }
+    }
+
+    async function fetchPlaylist(id, key) {
+      const playlistParams = new URLSearchParams({ part: 'snippet', id, key });
+      const playlistResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlists?${playlistParams}`);
+      const playlistData = await playlistResponse.json();
+      if (!playlistResponse.ok) {
+        throw new Error(playlistData.error?.message || 'Could not load playlist details. Check that it is public and the URL is correct.');
+      }
+      const title = playlistData.items?.[0]?.snippet?.title || 'YouTube playlist';
+      let token = '';
+      const items = [];
+      do {
+        const params = new URLSearchParams({
+          part: 'snippet,contentDetails',
+          maxResults: '50',
+          playlistId: id,
+          key
+        });
+        if (token) params.set('pageToken', token);
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?${params}`);
+        const data = await response.json();
+        if (!response.ok) {
+          const reason = data.error?.errors?.[0]?.reason;
+          if (reason === 'keyInvalid') throw new Error('That API key is invalid. Check the key and try again.');
+          if (reason === 'quotaExceeded') throw new Error('YouTube API quota reached. Try again tomorrow or use manual entry.');
+          throw new Error(data.error?.message || 'Could not load this playlist. Check that it is public and the URL is correct.');
+        }
+        for (const entry of data.items || []) {
+          const videoId = entry.contentDetails?.videoId;
+          if (!videoId) continue;
+          items.push({ id: videoId, title: entry.snippet?.title || 'Untitled video', url: `https://www.youtube.com/watch?v=${videoId}`, done: false });
+        }
+        token = data.nextPageToken || '';
+      } while (token);
+      return { title, items };
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const id = playlistIdFromUrl(document.querySelector('#playlist-url').value.trim());
+      const key = document.querySelector('#api-key').value.trim();
+      const button = document.querySelector('#load-button');
+      if (!id) return announce('That URL does not include a playlist ID. Use a playlist URL with ?list=...', true);
+      if (!key) return announce('Enter a YouTube Data API key to import the playlist.', true);
+      button.disabled = true;
+      announce('Loading playlist lessons...');
+      try {
+        const imported = await fetchPlaylist(id, key);
+        if (!imported.items.length) throw new Error('No videos found. The playlist may be empty or private.');
+        const previous = new Map(playlist.items.map(item => [item.id, item.done]));
+        playlist = {
+          title: imported.title,
+          items: imported.items.map(item => ({ ...item, done: previous.get(item.id) || false }))
+        };
+        save();
+        render();
+        announce(`Imported ${playlist.items.length} lessons. Your progress is saved on this device.`);
+        document.querySelector('#api-key').value = '';
+      } catch (error) {
+        announce(error.message || 'Something went wrong while importing.', true);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.querySelector('#add-manual').addEventListener('click', () => {
+      const lines = document.querySelector('#manual-lessons').value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      if (!lines.length) return announce('Add at least one lesson name or video URL.', true);
+      const newItems = lines.map((line, index) => {
+        let url = '';
+        let title = line;
+        try {
+          const parsed = new URL(line);
+          if (parsed.hostname.includes('youtube.com') || parsed.hostname === 'youtu.be') {
+            const id = parsed.searchParams.get('v') || parsed.searchParams.get('list') || parsed.pathname.split('/').filter(Boolean).pop();
+            if (id) {
+              url = parsed.searchParams.has('list') && !parsed.searchParams.has('v') ? `https://www.youtube.com/playlist?list=${id}` : `https://www.youtube.com/watch?v=${id}`;
+              title = `YouTube video ${playlist.items.length + index + 1}`;
+            }
+          }
+        } catch { /* Treat non-URLs as lesson titles. */ }
+        return { id: `manual-${Date.now()}-${index}`, title, url, done: false };
+      });
+      playlist.title ||= 'My study list';
+      playlist.items.push(...newItems);
+      save();
+      render();
+      document.querySelector('#manual-lessons').value = '';
+      announce(`Added ${newItems.length} lessons.`);
+    });
+
+    document.querySelector('#clear-completed').addEventListener('click', () => {
+      const completed = playlist.items.filter(item => item.done).length;
+      if (!completed) return announce('No completed lessons to remove.');
+      playlist.items = playlist.items.filter(item => !item.done);
+      save();
+      render();
+      announce(`Removed ${completed} completed lessons.`);
+    });
+
+    document.querySelector('#remove-list').addEventListener('click', () => {
+      if (!playlist.items.length) return announce('Your study list is already empty.');
+      if (!window.confirm('Remove this entire study list and its saved progress?')) return;
+      playlist = { title: '', items: [] };
+      save();
+      render();
+      announce('Study list removed.');
+    });
+
+    function render() {
+      const done = playlist.items.filter(item => item.done).length;
+      const percent = playlist.items.length ? Math.round(done / playlist.items.length * 100) : 0;
+      document.querySelector('#playlist-title').textContent = playlist.title || 'Your study list';
+      document.querySelector('#playlist-meta').textContent = playlist.items.length ? `${playlist.items.length} LESSON${playlist.items.length === 1 ? '' : 'S'} · SAVED ON THIS DEVICE` : 'NO PLAYLIST LOADED';
+      document.querySelector('#percent').textContent = `${percent}%`;
+      document.querySelector('#counts').textContent = `${done} / ${playlist.items.length} DONE`;
+      document.querySelector('#progress-fill').style.width = `${percent}%`;
+      document.querySelector('#progressbar').setAttribute('aria-valuenow', String(percent));
+      if (!playlist.items.length) {
+        videoList.innerHTML = '<p class="empty">Import a playlist or add lesson names to get started.</p>';
+        return;
+      }
+      videoList.replaceChildren(...playlist.items.map((item, index) => {
+        const row = document.createElement('div');
+        row.className = `video-row${item.done ? ' done' : ''}`;
+        row.style.animationDelay = `${Math.min(index, 12) * 25}ms`;
+        const checkbox = document.createElement('input');
+        checkbox.className = 'video-check';
+        checkbox.type = 'checkbox';
+        checkbox.checked = item.done;
+        checkbox.setAttribute('aria-label', `Mark ${item.title} complete`);
+        checkbox.addEventListener('change', () => {
+          item.done = checkbox.checked;
+          save();
+          render();
+        });
+        const label = document.createElement('div');
+        label.className = 'video-label';
+        const title = document.createElement(item.url ? 'a' : 'span');
+        title.textContent = item.title;
+        if (item.url) {
+          title.href = item.url;
+          title.target = '_blank';
+          title.rel = 'noopener noreferrer';
+        }
+        label.append(title);
+        const subtitle = document.createElement('small');
+        subtitle.textContent = `LESSON ${String(index + 1).padStart(2, '0')}`;
+        label.append(subtitle);
+        row.append(checkbox, label);
+        if (item.url) {
+          const link = document.createElement('a');
+          link.className = 'open-link';
+          link.href = item.url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.setAttribute('aria-label', `Open ${item.title} in YouTube`);
+          link.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7m-1-6L10 14"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
+          row.append(link);
+        } else {
+          row.append(document.createElement('span'));
+        }
+        return row;
+      }));
+    }
+
+    render();
+  </script>
+</body>
+</html>
